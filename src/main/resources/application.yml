@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/rental-management
+    username: postgres
+    password: 123456789
+    driver-class-name: org.postgresql.Driver
+  jdbc:
+    initialize-schema: always
