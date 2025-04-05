@@ -1,14 +1,19 @@
 package com.realestate.rentalmanagement.service.impl;
 
 import com.realestate.rentalmanagement.entity.User;
+import com.realestate.rentalmanagement.payload.request.UserRequestDTO;
+import com.realestate.rentalmanagement.payload.response.UserResponseDTO;
 import com.realestate.rentalmanagement.repository.UserRepository;
 import com.realestate.rentalmanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -20,36 +25,79 @@ public class UserServiceImpl implements UserService {
         this.userRepository = userRepository;
     }
 
-    @Override
-    @Transactional
-    public User createUser(User user) {
-        return userRepository.save(user);
+    // Метод для маппинга сущности User в UserResponseDTO
+    private UserResponseDTO mapToDTO(User user) {
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRole(user.getRole());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setBalance(user.getBalance());
+        dto.setAccountNumber(user.getAccountNumber());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
+    }
+
+    // Метод для маппинга UserRequestDTO в сущность User
+    private User mapToEntity(UserRequestDTO dto) {
+        User user = new User();
+        user.setUsername(dto.getUsername());
+        user.setPassword(dto.getPassword());
+        user.setEmail(dto.getEmail());
+        user.setRole(dto.getRole());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        return user;
     }
 
     @Override
     @Transactional
-    public User updateUser(User user) {
-        return userRepository.save(user);
+    public UserResponseDTO registerUser(UserRequestDTO userRequestDTO) {
+        // Маппинг DTO в сущность
+        User user = mapToEntity(userRequestDTO);
+        // Устанавливаем начальные значения
+        user.setBalance(BigDecimal.ZERO);
+        user.setAccountNumber("ACC" + UUID.randomUUID());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        User createdUser = userRepository.save(user);
+        return mapToDTO(createdUser);
+    }
+
+    @Override
+    public UserResponseDTO getUserById(Long id) {
+        return userRepository.findById(id)
+                .map(this::mapToDTO)
+                .orElse(null);
     }
 
     @Override
     @Transactional
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
+        return userRepository.findById(id).map(existingUser -> {
+            existingUser.setUsername(userRequestDTO.getUsername());
+            existingUser.setEmail(userRequestDTO.getEmail());
+            existingUser.setPassword(userRequestDTO.getPassword());
+            existingUser.setRole(userRequestDTO.getRole());
+            existingUser.setFirstName(userRequestDTO.getFirstName());
+            existingUser.setLastName(userRequestDTO.getLastName());
+            existingUser.setUpdatedAt(LocalDateTime.now());
+            User updatedUser = userRepository.save(existingUser);
+            return mapToDTO(updatedUser);
+        }).orElse(null);
     }
 
     @Override
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }
-
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    @Transactional
+    public boolean deleteUser(Long id) {
+        if(userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
