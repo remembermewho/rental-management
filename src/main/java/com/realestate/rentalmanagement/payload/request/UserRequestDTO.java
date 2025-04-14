@@ -2,6 +2,7 @@ package com.realestate.rentalmanagement.payload.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class UserRequestDTO {
@@ -16,7 +17,7 @@ public class UserRequestDTO {
     @Email(message = "Некорректный формат email")
     private String email;
 
-    @NotBlank(message = "Роль обязательна")
+    @NotNull(message = "Роль обязательна")
     private String role;
 
     @NotBlank(message = "Имя обязательно")

@@ -1,11 +1,14 @@
 package com.realestate.rentalmanagement.service.impl;
 
+import com.realestate.rentalmanagement.entity.Role;
 import com.realestate.rentalmanagement.entity.User;
 import com.realestate.rentalmanagement.payload.request.UserRequestDTO;
 import com.realestate.rentalmanagement.payload.response.UserResponseDTO;
+import com.realestate.rentalmanagement.repository.RoleRepository;
 import com.realestate.rentalmanagement.repository.UserRepository;
 import com.realestate.rentalmanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +22,15 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Метод для маппинга сущности User в UserResponseDTO
@@ -31,7 +39,7 @@ public class UserServiceImpl implements UserService {
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
-        dto.setRole(user.getRole());
+        dto.setRole(user.getRole().getName());
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setBalance(user.getBalance());
@@ -43,11 +51,13 @@ public class UserServiceImpl implements UserService {
 
     // Метод для маппинга UserRequestDTO в сущность User
     private User mapToEntity(UserRequestDTO dto) {
+
+        Role role = roleRepository.findByName(dto.getRole());
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setEmail(dto.getEmail());
-        user.setRole(dto.getRole());
+        user.setRole(role);
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         return user;
@@ -78,11 +88,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
+        Role role = roleRepository.findByName(userRequestDTO.getRole());
+
         return userRepository.findById(id).map(existingUser -> {
             existingUser.setUsername(userRequestDTO.getUsername());
             existingUser.setEmail(userRequestDTO.getEmail());
             existingUser.setPassword(userRequestDTO.getPassword());
-            existingUser.setRole(userRequestDTO.getRole());
+            existingUser.setRole(role);
             existingUser.setFirstName(userRequestDTO.getFirstName());
             existingUser.setLastName(userRequestDTO.getLastName());
             existingUser.setUpdatedAt(LocalDateTime.now());
