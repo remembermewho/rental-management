@@ -6,6 +6,7 @@ import java.util.List;
 
 public class PropertyResponseDTO {
     private Long id;
+    private Long ownerId;
     private String propertyType;
     private int numberOfRooms;
     private String houseSeries;
@@ -53,6 +54,14 @@ public class PropertyResponseDTO {
 
     public void setPropertyType(String propertyType) {
         this.propertyType = propertyType;
+    }
+
+    public Long getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
     }
 
     public int getNumberOfRooms() {

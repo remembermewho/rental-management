@@ -39,16 +39,25 @@ public class PropertyController {
         return property != null ? ResponseEntity.ok(property) : ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PropertyResponseDTO>> getPropertiesByUserId(@PathVariable Long userId) {
+        List<PropertyResponseDTO> propertyResponseDTOS = propertyService.getAllPropertiesByUserId(userId);
+        return ResponseEntity.ok(propertyResponseDTOS);
+    }
     // POST /api/properties
     @PostMapping
     public ResponseEntity<PropertyResponseDTO> createProperty(@Valid @RequestBody PropertyRequestDTO propertyRequestDTO) {
         PropertyResponseDTO created = propertyService.createProperty(propertyRequestDTO);
+        System.out.println(propertyRequestDTO.toString());
+        System.out.println("WORK");
         return ResponseEntity.created(URI.create("/api/properties/" + created.getId())).body(created);
     }
 
     // PUT /api/properties/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<PropertyResponseDTO> updateProperty(@PathVariable Long id, @Valid @RequestBody PropertyRequestDTO propertyRequestDTO) {
+    public ResponseEntity<PropertyResponseDTO> updateProperty(
+            @PathVariable Long id,
+            @Valid @RequestBody PropertyRequestDTO propertyRequestDTO) {
         PropertyResponseDTO updated = propertyService.updateProperty(id, propertyRequestDTO);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }

@@ -19,6 +19,12 @@ public class Property {
     // Уникальный идентификатор объявления
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
+
+
     // Обязательное поле: тип недвижимости (например, "Квартира", "Коммерческая недвижимость")
     @NotBlank(message = "Тип недвижимости обязателен")
     @Column(name = "property_type", nullable = false)
@@ -388,5 +394,13 @@ public class Property {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 }

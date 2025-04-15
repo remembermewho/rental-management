@@ -25,6 +25,8 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
         UserResponseDTO createdUser = userService.registerUser(userRequestDTO);
+
+        System.out.println(userRequestDTO.toString());
         return ResponseEntity.created(URI.create("/api/users/" + createdUser.getId())).body(createdUser);
     }
 

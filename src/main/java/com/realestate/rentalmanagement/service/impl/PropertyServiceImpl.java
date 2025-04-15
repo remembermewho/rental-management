@@ -1,11 +1,16 @@
 package com.realestate.rentalmanagement.service.impl;
 
 import com.realestate.rentalmanagement.entity.Property;
+import com.realestate.rentalmanagement.entity.User;
 import com.realestate.rentalmanagement.payload.request.PropertyRequestDTO;
 import com.realestate.rentalmanagement.payload.response.PropertyResponseDTO;
 import com.realestate.rentalmanagement.repository.PropertyRepository;
+import com.realestate.rentalmanagement.repository.UserRepository;
 import com.realestate.rentalmanagement.service.PropertyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.PropertyMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +23,12 @@ import java.util.stream.Collectors;
 public class PropertyServiceImpl implements PropertyService {
 
     private final PropertyRepository propertyRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public PropertyServiceImpl(PropertyRepository propertyRepository) {
+    public PropertyServiceImpl(PropertyRepository propertyRepository, UserRepository userRepository) {
         this.propertyRepository = propertyRepository;
+        this.userRepository = userRepository;
     }
 
     // Маппинг Property в PropertyResponseDTO
@@ -95,6 +102,15 @@ public class PropertyServiceImpl implements PropertyService {
     @Transactional
     public PropertyResponseDTO createProperty(PropertyRequestDTO propertyRequestDTO) {
         Property property = mapToEntity(propertyRequestDTO);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String username = auth.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        property.setOwner(user);
         property.setCreatedAt(LocalDateTime.now());
         property.setUpdatedAt(LocalDateTime.now());
         Property created = propertyRepository.save(property);
@@ -104,36 +120,50 @@ public class PropertyServiceImpl implements PropertyService {
     @Override
     @Transactional
     public PropertyResponseDTO updateProperty(Long id, PropertyRequestDTO propertyRequestDTO) {
-        return propertyRepository.findById(id).map(existing -> {
-            existing.setPropertyType(propertyRequestDTO.getPropertyType());
-            existing.setNumberOfRooms(propertyRequestDTO.getNumberOfRooms());
-            existing.setHouseSeries(propertyRequestDTO.getHouseSeries());
-            existing.setBuildingType(propertyRequestDTO.getBuildingType());
-            existing.setFloor(propertyRequestDTO.getFloor());
-            existing.setArea(propertyRequestDTO.getArea());
-            existing.setCondition(propertyRequestDTO.getCondition());
-            existing.setRegion(propertyRequestDTO.getRegion());
-            existing.setCity(propertyRequestDTO.getCity());
-            existing.setDistrict(propertyRequestDTO.getDistrict());
-            existing.setStreet(propertyRequestDTO.getStreet());
-            existing.setHouseNumber(propertyRequestDTO.getHouseNumber());
-            existing.setLongitude(propertyRequestDTO.getLongitude());
-            existing.setLatitude(propertyRequestDTO.getLatitude());
-            existing.setPrice(propertyRequestDTO.getPrice());
-            existing.setYearOfCommissioning(propertyRequestDTO.getYearOfCommissioning());
-            existing.setHeating(propertyRequestDTO.getHeating());
-            existing.setTelephone(propertyRequestDTO.getTelephone());
-            existing.setInternet(propertyRequestDTO.getInternet());
-            existing.setBathroomType(propertyRequestDTO.getBathroomType());
-            existing.setGas(propertyRequestDTO.getGas());
-            existing.setBalcony(propertyRequestDTO.getBalcony());
-            existing.setFurniture(propertyRequestDTO.getFurniture());
-            existing.setAirConditioner(propertyRequestDTO.getAirConditioner());
-            existing.setAnnouncementText(propertyRequestDTO.getAnnouncementText());
-            existing.setUpdatedAt(LocalDateTime.now());
-            Property updated = propertyRepository.save(existing);
-            return mapToDTO(updated);
-        }).orElse(null);
+        Property existing = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Объект не найден"));
+
+        // 🛡 Проверка, что текущий пользователь владелец
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        if (!existing.getOwner().getId().equals(currentUser.getId())) {
+            throw new SecurityException("Вы не являетесь владельцем этого объекта");
+        }
+
+        // ✅ Обновляем данные
+        existing.setPropertyType(propertyRequestDTO.getPropertyType());
+        existing.setNumberOfRooms(propertyRequestDTO.getNumberOfRooms());
+        existing.setHouseSeries(propertyRequestDTO.getHouseSeries());
+        existing.setBuildingType(propertyRequestDTO.getBuildingType());
+        existing.setFloor(propertyRequestDTO.getFloor());
+        existing.setArea(propertyRequestDTO.getArea());
+        existing.setCondition(propertyRequestDTO.getCondition());
+        existing.setRegion(propertyRequestDTO.getRegion());
+        existing.setCity(propertyRequestDTO.getCity());
+        existing.setDistrict(propertyRequestDTO.getDistrict());
+        existing.setStreet(propertyRequestDTO.getStreet());
+        existing.setHouseNumber(propertyRequestDTO.getHouseNumber());
+        existing.setLongitude(propertyRequestDTO.getLongitude());
+        existing.setLatitude(propertyRequestDTO.getLatitude());
+        existing.setPrice(propertyRequestDTO.getPrice());
+        existing.setYearOfCommissioning(propertyRequestDTO.getYearOfCommissioning());
+        existing.setHeating(propertyRequestDTO.getHeating());
+        existing.setTelephone(propertyRequestDTO.getTelephone());
+        existing.setInternet(propertyRequestDTO.getInternet());
+        existing.setBathroomType(propertyRequestDTO.getBathroomType());
+        existing.setGas(propertyRequestDTO.getGas());
+        existing.setBalcony(propertyRequestDTO.getBalcony());
+        existing.setFurniture(propertyRequestDTO.getFurniture());
+        existing.setAirConditioner(propertyRequestDTO.getAirConditioner());
+        existing.setAnnouncementText(propertyRequestDTO.getAnnouncementText());
+        existing.setUpdatedAt(LocalDateTime.now());
+
+        Property updated = propertyRepository.save(existing);
+        return mapToDTO(updated);
     }
 
     @Override
@@ -163,5 +193,13 @@ public class PropertyServiceImpl implements PropertyService {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public List<PropertyResponseDTO> getAllPropertiesByUserId(Long userId) {
+        List<Property> properties = propertyRepository.findByOwnerId(userId);
+        return properties.stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 }
