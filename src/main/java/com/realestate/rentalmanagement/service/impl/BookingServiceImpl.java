@@ -9,6 +9,8 @@ import com.realestate.rentalmanagement.repository.BookingRepository;
 import com.realestate.rentalmanagement.repository.PropertyRepository;
 import com.realestate.rentalmanagement.repository.UserRepository;
 import com.realestate.rentalmanagement.service.BookingService;
+import com.realestate.rentalmanagement.service.NotificationService;
+import com.realestate.rentalmanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +26,15 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
-
+    private final NotificationService notificationService;
     @Autowired
     public BookingServiceImpl(BookingRepository bookingRepository,
                               PropertyRepository propertyRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository, NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     // Маппинг Booking в BookingResponseDTO
@@ -83,6 +86,13 @@ public class BookingServiceImpl implements BookingService {
         booking.setCreatedAt(LocalDateTime.now());
         booking.setUpdatedAt(LocalDateTime.now());
         Booking saved = bookingRepository.save(booking);
+
+        notificationService.createSystemNotification(
+                booking.getProperty().getOwner().getId(),  // арендодатель
+                "NEW_BOOKING",
+                "Арендатор оставил заявку на аренду объекта ID: " + booking.getProperty().getId()
+        );
+
         return mapToDTO(saved);
     }
 
@@ -90,30 +100,46 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDTO updateBooking(Long id, BookingRequestDTO bookingRequestDTO) {
         return bookingRepository.findById(id).map(existing -> {
-            // Обновляем даты аренды
             existing.setStartDate(bookingRequestDTO.getStartDate());
             existing.setEndDate(bookingRequestDTO.getEndDate());
-            //Цена
             existing.setTotalPrice(bookingRequestDTO.getTotalPrice());
-            // Обновляем статус
+
+            String oldStatus = existing.getStatus();
             String newStatus = bookingRequestDTO.getStatus();
             existing.setStatus(newStatus);
             existing.setUpdatedAt(LocalDateTime.now());
 
-            // Если статус подтверждён — делаем объект недоступным
-            if ("APPROVED".equalsIgnoreCase(newStatus)) {
-                Property property = existing.getProperty();
-                property.setBooked(true); // 💡 isBooked -> setBooked(true)
-                propertyRepository.save(property);
-            }
-
-            // Если статус отклонён — заглушка для уведомления
-            if ("REJECTED".equalsIgnoreCase(newStatus)) {
-                // TODO: отправить уведомление арендатору, что его заявка отклонена
-                System.out.println("❗ Заявка арендатора отклонена. Можно отправить уведомление на email.");
-            }
-
             Booking updated = bookingRepository.save(existing);
+
+            // Уведомления по статусам
+            if (!oldStatus.equals(newStatus)) {
+                if ("APPROVED".equals(newStatus)) {
+                    // ✅ Уведомление арендатору
+                    notificationService.createSystemNotification(
+                            existing.getTenant().getId(),
+                            "BOOKING_APPROVED",
+                            "Ваша заявка на аренду объекта ID: " + existing.getProperty().getId() + " была одобрена"
+                    );
+                    // Помечаем объект как арендованный
+                    Property prop = existing.getProperty();
+                    prop.setBooked(true);
+                    propertyRepository.save(prop);
+
+                } else if ("REJECTED".equals(newStatus)) {
+                    notificationService.createSystemNotification(
+                            existing.getTenant().getId(),
+                            "BOOKING_REJECTED",
+                            "Ваша заявка на аренду объекта ID: " + existing.getProperty().getId() + " была отклонена"
+                    );
+                } else if ("CANCELLED".equals(newStatus)) {
+                    notificationService.createSystemNotification(
+                            existing.getProperty().getOwner().getId(),
+                            "BOOKING_CANCELLED",
+                            "Арендатор отменил заявку на аренду объекта ID: " + existing.getProperty().getId()
+                    );
+                }
+            }
+
             return mapToDTO(updated);
         }).orElse(null);
     }

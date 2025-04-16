@@ -113,4 +113,10 @@ public class NotificationServiceImpl implements NotificationService {
         dto.setMessage(message);
         createNotification(dto);
     }
+
+    @Override
+    @Transactional
+    public void deleteAllByUser(Long userId) {
+        notificationRepository.deleteAllByUserId(userId);
+    }
 }

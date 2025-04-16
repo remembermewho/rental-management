@@ -43,6 +43,13 @@ public class NotificationController {
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
+    // DELETE /api/notifications/user/{userId}
+    @DeleteMapping("/user/{userId}")
+    public ResponseEntity<Void> deleteAllByUser(@PathVariable Long userId) {
+        notificationService.deleteAllByUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
         boolean updated = notificationService.markAsRead(id);
