@@ -13,4 +13,7 @@ public interface NotificationService {
     NotificationResponseDTO getNotificationById(Long id);
     List<NotificationResponseDTO> getNotificationsByUserId(Long userId);
     boolean deleteNotification(Long id);
+
+    boolean markAsRead(Long id);
+    void createSystemNotification(Long userId, String type, String message);
 }

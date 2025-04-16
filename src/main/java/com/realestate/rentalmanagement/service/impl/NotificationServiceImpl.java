@@ -93,4 +93,24 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return false;
     }
+
+    @Override
+    @Transactional
+    public boolean markAsRead(Long id) {
+        return notificationRepository.findById(id).map(n -> {
+            n.setRead(true);
+            notificationRepository.save(n);
+            return true;
+        }).orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public void createSystemNotification(Long userId, String type, String message) {
+        NotificationRequestDTO dto = new NotificationRequestDTO();
+        dto.setUserId(userId);
+        dto.setType(type);
+        dto.setMessage(message);
+        createNotification(dto);
+    }
 }

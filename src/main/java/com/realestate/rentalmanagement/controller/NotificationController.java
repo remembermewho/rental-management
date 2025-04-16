@@ -42,4 +42,10 @@ public class NotificationController {
         boolean deleted = notificationService.deleteNotification(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}/read")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
+        boolean updated = notificationService.markAsRead(id);
+        return updated ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
 }

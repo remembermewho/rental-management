@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
         user.setAccountNumber("ACC" + UUID.randomUUID());
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-
+        user.setEnabled(true);
         User createdUser = userRepository.save(user);
         return mapToDTO(createdUser);
     }
