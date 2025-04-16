@@ -11,6 +11,6 @@ public interface BookingService {
     BookingResponseDTO createBooking(BookingRequestDTO bookingRequestDTO);
     BookingResponseDTO updateBooking(Long id, BookingRequestDTO bookingRequestDTO);
     BookingResponseDTO getBookingById(Long id);
-    List<BookingResponseDTO> getBookings(Long tenantId, String status);
+    List<BookingResponseDTO> getBookings(Long tenantId, Long propertyId, String status);
     boolean deleteBooking(Long id);
 }

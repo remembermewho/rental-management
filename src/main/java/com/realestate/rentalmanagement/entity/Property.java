@@ -23,7 +23,7 @@ public class Property {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-
+    private Boolean isBooked = false;
 
     // Обязательное поле: тип недвижимости (например, "Квартира", "Коммерческая недвижимость")
     @NotBlank(message = "Тип недвижимости обязателен")
@@ -160,7 +160,13 @@ public class Property {
 
     }
 
+    public Boolean getBooked() {
+        return isBooked;
+    }
 
+    public void setBooked(Boolean booked) {
+        isBooked = booked;
+    }
 
     public Long getId() {
         return id;

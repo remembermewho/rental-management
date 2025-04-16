@@ -34,6 +34,7 @@ public class PropertyServiceImpl implements PropertyService {
     // Маппинг Property в PropertyResponseDTO
     private PropertyResponseDTO mapToDTO(Property property) {
         PropertyResponseDTO dto = new PropertyResponseDTO();
+        dto.setBooked(property.getBooked());
         dto.setId(property.getId());
         dto.setPropertyType(property.getPropertyType());
         dto.setNumberOfRooms(property.getNumberOfRooms());
@@ -71,6 +72,7 @@ public class PropertyServiceImpl implements PropertyService {
     private Property mapToEntity(PropertyRequestDTO dto) {
         Property property = new Property();
         property.setPropertyType(dto.getPropertyType());
+        property.setBooked(false);
         property.setNumberOfRooms(dto.getNumberOfRooms());
         property.setHouseSeries(dto.getHouseSeries());
         property.setBuildingType(dto.getBuildingType());
@@ -176,8 +178,8 @@ public class PropertyServiceImpl implements PropertyService {
     @Override
     public List<PropertyResponseDTO> getProperties(String region, String city, Integer numberOfRooms) {
         List<Property> properties = propertyRepository.findAll();
-        // Простейшая фильтрация (можно заменить на запрос в БД для лучшей производительности)
         return properties.stream()
+                .filter(p -> !p.getBooked()) // ✅ только доступные для аренды
                 .filter(p -> region == null || p.getRegion().equalsIgnoreCase(region))
                 .filter(p -> city == null || p.getCity().equalsIgnoreCase(city))
                 .filter(p -> numberOfRooms == null || p.getNumberOfRooms() == numberOfRooms)

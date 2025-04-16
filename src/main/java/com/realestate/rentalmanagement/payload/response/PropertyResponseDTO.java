@@ -22,7 +22,7 @@ public class PropertyResponseDTO {
     private Double longitude;
     private Double latitude;
     private BigDecimal price;
-
+    private Boolean isBooked;
     private Integer yearOfCommissioning;
     private String heating;
     private Boolean telephone;
@@ -58,6 +58,14 @@ public class PropertyResponseDTO {
 
     public Long getOwnerId() {
         return ownerId;
+    }
+
+    public Boolean getBooked() {
+        return isBooked;
+    }
+
+    public void setBooked(Boolean booked) {
+        isBooked = booked;
     }
 
     public void setOwnerId(Long ownerId) {

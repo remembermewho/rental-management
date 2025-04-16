@@ -10,11 +10,20 @@ public class BookingResponseDTO {
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;
+    private Double totalPrice;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public Long getId() {
         return id;
+    }
+
+    public Double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(Double totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public void setId(Long id) {

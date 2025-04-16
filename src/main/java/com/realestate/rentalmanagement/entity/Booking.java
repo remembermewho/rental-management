@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -19,6 +20,9 @@ public class Booking {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
+
+    @Column(name = "total_price", nullable = false)
+    private Double totalPrice;
 
     // Обязательное поле: арендатор, подающий заявку (сущность User)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,9 +40,9 @@ public class Booking {
     private LocalDate endDate;
 
     // Обязательное поле: статус бронирования (например, "PENDING", "APPROVED", "REJECTED", "CANCELLED")
-    @NotBlank(message = "Статус бронирования обязателен")
+
     @Column(nullable = false)
-    private String status;
+    private String status = "PENDING";
 
     // Обязательное поле: дата создания бронирования
     @Column(name = "created_at", nullable = false)
@@ -51,6 +55,15 @@ public class Booking {
     public Booking() {}
 
     // Геттеры и сеттеры
+
+
+    public Double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(Double totalPrice) {
+        this.totalPrice = totalPrice;
+    }
 
     public Long getId() {
         return id;

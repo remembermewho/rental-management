@@ -26,8 +26,9 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<List<BookingResponseDTO>> getBookings(
             @RequestParam(required = false) Long tenantId,
+            @RequestParam(required = false) Long propertyId,
             @RequestParam(required = false) String status) {
-        List<BookingResponseDTO> bookings = bookingService.getBookings(tenantId, status);
+        List<BookingResponseDTO> bookings = bookingService.getBookings(tenantId, propertyId, status);
         return ResponseEntity.ok(bookings);
     }
 
@@ -49,6 +50,9 @@ public class BookingController {
     @PutMapping("/{id}")
     public ResponseEntity<BookingResponseDTO> updateBooking(@PathVariable Long id,
                                                             @Valid @RequestBody BookingRequestDTO bookingRequestDTO) {
+        System.out.println("BOOKING PUT WORK.");
+        System.out.println(id);
+        System.out.println(bookingRequestDTO.toString());
         BookingResponseDTO updated = bookingService.updateBooking(id, bookingRequestDTO);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }

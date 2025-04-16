@@ -38,6 +38,7 @@ public class BookingServiceImpl implements BookingService {
     private BookingResponseDTO mapToDTO(Booking booking) {
         BookingResponseDTO dto = new BookingResponseDTO();
         dto.setId(booking.getId());
+        dto.setTotalPrice(booking.getTotalPrice());
         dto.setPropertyId(booking.getProperty().getId());
         dto.setTenantId(booking.getTenant().getId());
         dto.setStartDate(booking.getStartDate());
@@ -61,13 +62,23 @@ public class BookingServiceImpl implements BookingService {
         booking.setTenant(tenant);
         booking.setStartDate(dto.getStartDate());
         booking.setEndDate(dto.getEndDate());
-        booking.setStatus(dto.getStatus());
+        booking.setTotalPrice(dto.getTotalPrice());
+
         return booking;
     }
 
     @Override
     @Transactional
     public BookingResponseDTO createBooking(BookingRequestDTO bookingRequestDTO) {
+        // Проверка: уже есть активная заявка
+        boolean exists = bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(
+                bookingRequestDTO.getPropertyId(),
+                bookingRequestDTO.getTenantId(),
+                List.of("PENDING", "APPROVED")
+        );
+        if (exists) {
+            throw new IllegalStateException("Вы уже подали заявку на этот объект");
+        }
         Booking booking = mapToEntity(bookingRequestDTO);
         booking.setCreatedAt(LocalDateTime.now());
         booking.setUpdatedAt(LocalDateTime.now());
@@ -79,16 +90,34 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDTO updateBooking(Long id, BookingRequestDTO bookingRequestDTO) {
         return bookingRepository.findById(id).map(existing -> {
-            // Обычно объект недвижимости и арендатора менять не требуется,
-            // поэтому обновляем только даты и статус.
+            // Обновляем даты аренды
             existing.setStartDate(bookingRequestDTO.getStartDate());
             existing.setEndDate(bookingRequestDTO.getEndDate());
-            existing.setStatus(bookingRequestDTO.getStatus());
+            //Цена
+            existing.setTotalPrice(bookingRequestDTO.getTotalPrice());
+            // Обновляем статус
+            String newStatus = bookingRequestDTO.getStatus();
+            existing.setStatus(newStatus);
             existing.setUpdatedAt(LocalDateTime.now());
+
+            // Если статус подтверждён — делаем объект недоступным
+            if ("APPROVED".equalsIgnoreCase(newStatus)) {
+                Property property = existing.getProperty();
+                property.setBooked(true); // 💡 isBooked -> setBooked(true)
+                propertyRepository.save(property);
+            }
+
+            // Если статус отклонён — заглушка для уведомления
+            if ("REJECTED".equalsIgnoreCase(newStatus)) {
+                // TODO: отправить уведомление арендатору, что его заявка отклонена
+                System.out.println("❗ Заявка арендатора отклонена. Можно отправить уведомление на email.");
+            }
+
             Booking updated = bookingRepository.save(existing);
             return mapToDTO(updated);
         }).orElse(null);
     }
+
 
     @Override
     public BookingResponseDTO getBookingById(Long id) {
@@ -98,11 +127,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingResponseDTO> getBookings(Long tenantId, String status) {
-        // Простейшая фильтрация: если tenantId или статус переданы, фильтруем результаты
+    public List<BookingResponseDTO> getBookings(Long tenantId, Long propertyId, String status) {
         List<Booking> bookings = bookingRepository.findAll();
         return bookings.stream()
                 .filter(b -> tenantId == null || b.getTenant().getId().equals(tenantId))
+                .filter(b -> propertyId == null || b.getProperty().getId().equals(propertyId))
                 .filter(b -> status == null || b.getStatus().equalsIgnoreCase(status))
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());

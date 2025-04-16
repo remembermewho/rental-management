@@ -21,12 +21,30 @@ public class BookingRequestDTO {
     @NotNull(message = "Дата окончания аренды обязательна")
     private LocalDate endDate;
 
-    // Начальный статус заявки (например, "PENDING")
-    @NotNull(message = "Статус бронирования обязателен")
+    @NotNull(message = "Итоговая сумма обязательна")
+    private Double totalPrice;
+
+    @NotNull
     private String status;
 
     public @NotNull(message = "Property ID обязателен") Long getPropertyId() {
         return propertyId;
+    }
+
+    public @NotNull Double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public @NotNull String getStatus() {
+        return status;
+    }
+
+    public void setStatus(@NotNull String status) {
+        this.status = status;
+    }
+
+    public void setTotalPrice(@NotNull Double totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public void setPropertyId(@NotNull(message = "Property ID обязателен") Long propertyId) {
@@ -57,11 +75,15 @@ public class BookingRequestDTO {
         this.endDate = endDate;
     }
 
-    public @NotNull(message = "Статус бронирования обязателен") String getStatus() {
-        return status;
-    }
-
-    public void setStatus(@NotNull(message = "Статус бронирования обязателен") String status) {
-        this.status = status;
+    @Override
+    public String toString() {
+        return "BookingRequestDTO{" +
+                "propertyId=" + propertyId +
+                ", tenantId=" + tenantId +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", totalPrice=" + totalPrice +
+                ", status='" + status + '\'' +
+                '}';
     }
 }
