@@ -37,7 +37,8 @@ public class SecurityConfig {
                 .securityMatcher("/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/users/register", "/uploads/photos/**").permitAll()
+                        .requestMatchers("/api/users/register", "/uploads/photos/**", "/api/properties/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors
