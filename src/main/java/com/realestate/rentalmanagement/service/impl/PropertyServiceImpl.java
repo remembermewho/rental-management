@@ -7,8 +7,8 @@ import com.realestate.rentalmanagement.payload.response.PropertyResponseDTO;
 import com.realestate.rentalmanagement.repository.PropertyRepository;
 import com.realestate.rentalmanagement.repository.UserRepository;
 import com.realestate.rentalmanagement.service.PropertyService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,6 +62,7 @@ public class PropertyServiceImpl implements PropertyService {
         dto.setAnnouncementText(property.getAnnouncementText());
         dto.setCreatedAt(property.getCreatedAt());
         dto.setUpdatedAt(property.getUpdatedAt());
+        dto.setActive(property.getActive());
         // Если есть связь с фотографиями, можно здесь заполнить список путей
         // dto.setPhotoPaths(...);
         return dto;
@@ -97,6 +97,7 @@ public class PropertyServiceImpl implements PropertyService {
         property.setFurniture(dto.getFurniture());
         property.setAirConditioner(dto.getAirConditioner());
         property.setAnnouncementText(dto.getAnnouncementText());
+        property.setActive(false);
         return property;
     }
 
@@ -179,7 +180,8 @@ public class PropertyServiceImpl implements PropertyService {
     public List<PropertyResponseDTO> getProperties(String region, String city, Integer numberOfRooms) {
         List<Property> properties = propertyRepository.findAll();
         return properties.stream()
-                .filter(p -> !p.getBooked()) // ✅ только доступные для аренды
+                .filter(p -> !p.getBooked())
+                .filter(Property::getActive)// ✅ только доступные для аренды
                 .filter(p -> region == null || p.getRegion().equalsIgnoreCase(region))
                 .filter(p -> city == null || p.getCity().equalsIgnoreCase(city))
                 .filter(p -> numberOfRooms == null || p.getNumberOfRooms() == numberOfRooms)
@@ -204,4 +206,14 @@ public class PropertyServiceImpl implements PropertyService {
                 .map(this::mapToDTO)
                 .toList();
     }
+
+    @Override
+    public void setActiveStatus(Long propertyId, boolean isActive) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new EntityNotFoundException("Объект не найден"));
+        property.setActive(isActive);
+        property.setUpdatedAt(LocalDateTime.now());
+        propertyRepository.save(property);
+    }
+
 }

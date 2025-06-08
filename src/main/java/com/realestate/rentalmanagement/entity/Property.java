@@ -106,6 +106,9 @@ public class Property {
     @Column(name = "year_of_commissioning")
     private Integer yearOfCommissioning;
 
+    @Column(nullable = false)
+    private Boolean isActive = true;
+
     // Опциональное поле: тип отопления
     @Column
     private String heating;
@@ -143,7 +146,7 @@ public class Property {
     private List<PropertyPhoto> photos;
 
     // Опциональное поле: текст объявления (подробное описание объекта)
-    @Column(name = "announcement_text")
+    @Column(name = "announcement_text", length = 1000)
     private String announcementText;
 
     // Обязательное поле: дата создания объявления
@@ -158,6 +161,14 @@ public class Property {
 
     public Property() {
 
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
     }
 
     public Boolean getBooked() {

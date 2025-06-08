@@ -33,12 +33,21 @@ public class PropertyResponseDTO {
     private Boolean furniture;
     private Boolean airConditioner;
     private String announcementText;
+    private boolean isActive;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // Список путей к фотографиям объекта
     private List<String> photoPaths;
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
 
     public Long getId() {
         return id;

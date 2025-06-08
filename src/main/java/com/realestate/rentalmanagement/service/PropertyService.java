@@ -15,4 +15,6 @@ public interface PropertyService {
     boolean deleteProperty(Long id);
 
     List<PropertyResponseDTO> getAllPropertiesByUserId(Long userId);
+
+    void setActiveStatus(Long propertyId, boolean isActive);
 }

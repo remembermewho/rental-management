@@ -68,4 +68,16 @@ public class PropertyController {
         boolean deleted = propertyService.deleteProperty(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<Void> activateProperty(@PathVariable Long id) {
+        propertyService.setActiveStatus(id, true);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivateProperty(@PathVariable Long id) {
+        propertyService.setActiveStatus(id, false);
+        return ResponseEntity.ok().build();
+    }
 }
